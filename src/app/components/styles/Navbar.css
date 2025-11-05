@@ -1,0 +1,103 @@
+/* Wrapper */
+.navbar-wrapper {
+  position: relative;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Top Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  color: #2a3b6b;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* Title */
+.navbar-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Hamburger Button */
+.hamburger-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #2a3b6b;
+  transition: transform 0.2s ease;
+}
+
+.hamburger-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Sidebar hidden by default (from right) */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -260px; /* hidden */
+  height: 100vh;
+  width: 240px;
+  background-color: #f8faff;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  padding-top: 80px;
+  transition: right 0.3s ease;
+  z-index: 30;
+}
+
+/* When open, slide in from right */
+.sidebar.open {
+  right: 0;
+}
+
+/* Sidebar List */
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  color: #2a3b6b;
+  cursor: pointer;
+  transition: background 0.3s ease, border-right 0.2s ease;
+}
+
+.sidebar li:hover {
+  background-color: #e1ecff;
+  border-right: 4px solid #4c8bf5;
+}
+
+/* Link styling */
+.sidebar a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* Overlay behind sidebar */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 25;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .navbar-title {
+    font-size: 1.2rem;
+  }
+}
