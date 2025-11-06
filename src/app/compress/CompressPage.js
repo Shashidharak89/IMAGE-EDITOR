@@ -1,19 +1,44 @@
 "use client";
 import React, { useState } from "react";
 import imageCompression from "browser-image-compression";
+import piexif from "piexifjs";
 import "./styles/CompressPage.css";
 
 const CompressPage = () => {
   const [originalImage, setOriginalImage] = useState(null);
   const [compressedImage, setCompressedImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [compressionPercent, setCompressionPercent] = useState(90); // default
+  const [compressionPercent, setCompressionPercent] = useState(90);
+  const [metadata, setMetadata] = useState(null);
 
-  const handleImageChange = (e) => {
+  // Helper: read image as DataURL
+  const readFileAsDataURL = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  // Extract EXIF metadata
+  const extractMetadata = async (file) => {
+    const dataUrl = await readFileAsDataURL(file);
+    try {
+      const exifObj = piexif.load(dataUrl);
+      setMetadata(exifObj);
+      return exifObj;
+    } catch (err) {
+      console.warn("No EXIF metadata found or failed to extract:", err);
+      return null;
+    }
+  };
+
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setOriginalImage(file);
       setCompressedImage(null);
+      await extractMetadata(file);
     }
   };
 
@@ -21,23 +46,36 @@ const CompressPage = () => {
     if (!originalImage) return;
     setLoading(true);
 
-    // Convert percentage to maxSizeMB dynamically
-    // Higher percentage = more compression (smaller file)
     const compressionRatio = compressionPercent / 100;
     const targetMB = Math.max(0.05, (originalImage.size / 1024 / 1024) * compressionRatio);
 
     const options = {
-      maxSizeMB: targetMB, 
+      maxSizeMB: targetMB,
       maxWidthOrHeight: 1280,
       useWebWorker: true,
     };
 
     try {
+      // Compress the image
       const compressedFile = await imageCompression(originalImage, options);
-      const compressedFileUrl = URL.createObjectURL(compressedFile);
+      let compressedDataUrl = await readFileAsDataURL(compressedFile);
+
+      // Reinsert EXIF metadata (if any)
+      if (metadata) {
+        try {
+          const exifBytes = piexif.dump(metadata);
+          compressedDataUrl = piexif.insert(exifBytes, compressedDataUrl);
+          console.log("EXIF metadata reapplied successfully ✅");
+        } catch (metaError) {
+          console.warn("Failed to reinsert metadata:", metaError);
+        }
+      }
+
+      const compressedBlob = await (await fetch(compressedDataUrl)).blob();
+      const compressedUrl = URL.createObjectURL(compressedBlob);
       setCompressedImage({
-        file: compressedFile,
-        url: compressedFileUrl,
+        file: compressedBlob,
+        url: compressedUrl,
       });
     } catch (error) {
       console.error("Compression failed:", error);
@@ -56,9 +94,8 @@ const CompressPage = () => {
 
   return (
     <div className="compress-container">
-      <h2 className="compress-title">Image Compressor</h2>
+      <h2 className="compress-title">Image Compressor (with Metadata)</h2>
 
-      {/* Upload Section */}
       <div className="upload-section">
         <input type="file" accept="image/*" onChange={handleImageChange} />
 
@@ -85,7 +122,6 @@ const CompressPage = () => {
         )}
       </div>
 
-      {/* Preview Section */}
       <div className="preview-section">
         {originalImage && (
           <div className="image-preview">
